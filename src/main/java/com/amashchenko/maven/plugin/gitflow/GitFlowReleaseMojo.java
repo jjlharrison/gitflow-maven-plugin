@@ -247,24 +247,31 @@ public class GitFlowReleaseMojo extends AbstractGitFlowMojo {
                 mvnRun(preReleaseGoals);
             }
 
+            Map<String, String> commitMessageProperties = new HashMap<String, String>();
+            commitMessageProperties.put("version", version);
+
             // execute if version changed
             if (!version.equals(currentVersion)) {
                 // mvn set version
                 mvnSetVersions(version);
 
-                Map<String, String> properties = new HashMap<String, String>();
-                properties.put("version", version);
 
                 // git commit -a -m updating versions for release
-                gitCommit(commitMessages.getReleaseStartMessage(), properties);
+                gitCommit(commitMessages.getReleaseStartMessage(), commitMessageProperties);
             }
 
             if (notSameProdDevName()) {
-                // git checkout master
-                gitCheckout(gitFlowConfig.getProductionBranch());
+                final String developmentBranch = gitFlowConfig.getDevelopmentBranch();
+                final String productionBranch = gitFlowConfig.getProductionBranch();
 
-                gitMerge(gitFlowConfig.getDevelopmentBranch(), releaseRebase,
-                        releaseMergeNoFF, releaseMergeFFOnly);
+                // git checkout master
+                gitCheckout(productionBranch);
+
+                commitMessageProperties.put("sourceBranch", developmentBranch);
+                commitMessageProperties.put("destinationBranch", productionBranch);
+                final String commitMessage = replaceCommitMessageProperties(commitMessages.getReleaseMergeMessage(),
+                                                                            commitMessageProperties);
+                gitMerge(developmentBranch, releaseRebase, releaseMergeNoFF, releaseMergeFFOnly, commitMessage);
             }
 
             if (!skipTag) {

@@ -186,15 +186,21 @@ public class GitFlowHotfixFinishMojo extends AbstractGitFlowMojo {
                 gitCommit(commitMessages.getHotfixStartMessage(), properties);
             }
 
+            String targetBranch;
             if (supportBranchName != null) {
-                gitCheckout(supportBranchName);
+                targetBranch = supportBranchName;
             } else {
-                // git checkout master
-                gitCheckout(gitFlowConfig.getProductionBranch());
+                targetBranch = gitFlowConfig.getProductionBranch();
             }
+            gitCheckout(targetBranch);
 
             // git merge --no-ff hotfix/...
-            gitMergeNoff(hotfixBranchName);
+            Map<String, String> properties = new HashMap<String, String>();
+            properties.put("version", currentHotfixVersion.replace("-" + Artifact.SNAPSHOT_VERSION, ""));
+            properties.put("sourceBranch", hotfixBranchName);
+            properties.put("targetBranch", targetBranch);
+            final String commitMessage = replaceCommitMessageProperties(commitMessages.getHotfixMergeMessage(), properties);
+            gitMergeNoff(hotfixBranchName, commitMessage);
 
             final String currentVersion = getCurrentProjectVersion();
 
@@ -205,7 +211,7 @@ public class GitFlowHotfixFinishMojo extends AbstractGitFlowMojo {
                             .replace("-" + Artifact.SNAPSHOT_VERSION, "");
                 }
 
-                Map<String, String> properties = new HashMap<String, String>();
+                properties = new HashMap<String, String>();
                 properties.put("version", tagVersion);
 
                 // git tag -a ...
@@ -230,7 +236,8 @@ public class GitFlowHotfixFinishMojo extends AbstractGitFlowMojo {
                     // git checkout release
                     gitCheckout(releaseBranch);
                     // git merge --no-ff hotfix/...
-                    gitMergeNoff(hotfixBranchName);
+                    // TODO Check commit
+                    gitMergeNoff(hotfixBranchName, commitMessage);
                 } else {
                     GitFlowVersionInfo developVersionInfo = new GitFlowVersionInfo(
                             currentVersion);
@@ -245,7 +252,8 @@ public class GitFlowHotfixFinishMojo extends AbstractGitFlowMojo {
                         gitCommit(commitMessages.getHotfixVersionUpdateMessage());
 
                         // git merge --no-ff hotfix/...
-                        gitMergeNoff(hotfixBranchName);
+                        // TODO Commit message
+                        gitMergeNoff(hotfixBranchName, commitMessage);
 
                         // which version to increment
                         GitFlowVersionInfo hotfixVersionInfo = new GitFlowVersionInfo(
@@ -268,7 +276,7 @@ public class GitFlowHotfixFinishMojo extends AbstractGitFlowMojo {
                     // -DgenerateBackupPoms=false
                     mvnSetVersions(nextSnapshotVersion);
 
-                    Map<String, String> properties = new HashMap<String, String>();
+                    properties = new HashMap<String, String>();
                     properties.put("version", nextSnapshotVersion);
 
                     // git commit -a -m updating for next development version

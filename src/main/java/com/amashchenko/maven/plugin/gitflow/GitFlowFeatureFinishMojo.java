@@ -101,10 +101,11 @@ public class GitFlowFeatureFinishMojo extends AbstractGitFlowMojo {
             }
 
             // fetch and check remote
+            final String developmentBranch = gitFlowConfig.getDevelopmentBranch();
             if (fetchRemote) {
                 gitFetchRemoteAndCompare(featureBranchName);
 
-                gitFetchRemoteAndCompare(gitFlowConfig.getDevelopmentBranch());
+                gitFetchRemoteAndCompare(developmentBranch);
             }
 
             if (!skipTestProject) {
@@ -116,33 +117,34 @@ public class GitFlowFeatureFinishMojo extends AbstractGitFlowMojo {
             }
 
             // git checkout develop
-            gitCheckout(gitFlowConfig.getDevelopmentBranch());
+            gitCheckout(developmentBranch);
+
+            final String featName = featureBranchName.replaceFirst(gitFlowConfig.getFeatureBranchPrefix(), "");
+
+            final String currentVersion = getCurrentProjectVersion();
+            final String newVersion = currentVersion.replaceFirst("-" + featName, "");
+
+            final Map<String, String> properties = new HashMap<String, String>();
+            properties.put("version", newVersion);
+            properties.put("featureName", featName);
 
             if (featureSquash) {
                 // git merge --squash feature/...
                 gitMergeSquash(featureBranchName);
                 gitCommit(featureBranchName);
             } else {
+                properties.put("sourceBranch", featureBranchName);
+                properties.put("targetBranch", developmentBranch);
+
                 // git merge --no-ff feature/...
-                gitMergeNoff(featureBranchName);
+                final String commitMessage = replaceCommitMessageProperties(commitMessages.getFeatureMergeMessage(), properties);
+                gitMergeNoff(featureBranchName, commitMessage);
             }
 
-            // get current project version from pom
-            final String currentVersion = getCurrentProjectVersion();
 
-            final String featName = featureBranchName
-                    .replaceFirst(gitFlowConfig.getFeatureBranchPrefix(), "");
-
-            if (currentVersion.contains("-" + featName)) {
-                final String version = currentVersion
-                        .replaceFirst("-" + featName, "");
-
+            if (!currentVersion.equals(newVersion)) {
                 // mvn versions:set -DnewVersion=... -DgenerateBackupPoms=false
-                mvnSetVersions(version);
-
-                Map<String, String> properties = new HashMap<String, String>();
-                properties.put("version", version);
-                properties.put("featureName", featName);
+                mvnSetVersions(newVersion);
 
                 // git commit -a -m updating versions for development branch
                 gitCommit(commitMessages.getFeatureFinishMessage(), properties);
@@ -154,7 +156,7 @@ public class GitFlowFeatureFinishMojo extends AbstractGitFlowMojo {
             }
 
             if (pushRemote) {
-                gitPush(gitFlowConfig.getDevelopmentBranch(), false);
+                gitPush(developmentBranch, false);
 
                 if (!keepBranch) {
                     gitPushDelete(featureBranchName);

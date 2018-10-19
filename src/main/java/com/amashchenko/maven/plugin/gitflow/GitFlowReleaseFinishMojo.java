@@ -235,9 +235,15 @@ public class GitFlowReleaseFinishMojo extends AbstractGitFlowMojo {
             }
 
             // git checkout master
-            gitCheckout(gitFlowConfig.getProductionBranch());
+            final String productionBranch = gitFlowConfig.getProductionBranch();
+            gitCheckout(productionBranch);
 
-            gitMerge(releaseBranch, releaseRebase, releaseMergeNoFF, releaseMergeFFOnly);
+            Map<String, String> properties = new HashMap<String, String>();
+            properties.put("version", currentReleaseVersion.replace("-" + Artifact.SNAPSHOT_VERSION, ""));
+            properties.put("sourceBranch", releaseBranch);
+            properties.put("destinationBranch", productionBranch);
+            String commitMessage = replaceCommitMessageProperties(commitMessages.getReleaseMergeMessage(), properties);
+            gitMerge(releaseBranch, releaseRebase, releaseMergeNoFF, releaseMergeFFOnly, commitMessage);
 
             // get current project version from pom
             final String currentVersion = getCurrentProjectVersion();
@@ -249,7 +255,7 @@ public class GitFlowReleaseFinishMojo extends AbstractGitFlowMojo {
                             + Artifact.SNAPSHOT_VERSION, "");
                 }
 
-                Map<String, String> properties = new HashMap<String, String>();
+                properties = new HashMap<String, String>();
                 properties.put("version", tagVersion);
 
                 // git tag -a ...
@@ -263,10 +269,19 @@ public class GitFlowReleaseFinishMojo extends AbstractGitFlowMojo {
             }
 
             if (notSameProdDevName()) {
-                // git checkout develop
-                gitCheckout(gitFlowConfig.getDevelopmentBranch());
+                final String developmentBranch = gitFlowConfig.getDevelopmentBranch();
 
-                gitMerge(releaseBranch, releaseRebase, releaseMergeNoFF, false);
+                // git checkout develop
+                gitCheckout(developmentBranch);
+
+                final String commitVersion = currentReleaseVersion.replace("-" + Artifact.SNAPSHOT_VERSION, "");
+                properties = new HashMap<String, String>();
+                properties.put("version", commitVersion);
+                properties.put("sourceBranch", developmentBranch);
+                properties.put("destinationBranch", releaseBranch);
+
+                commitMessage = replaceCommitMessageProperties(commitMessages.getReleaseMergeMessage(), properties);
+                gitMerge(releaseBranch, releaseRebase, releaseMergeNoFF, false, commitMessage);
             }
 
             if (commitDevelopmentVersionAtStart && !notSameProdDevName()) {
@@ -300,7 +315,7 @@ public class GitFlowReleaseFinishMojo extends AbstractGitFlowMojo {
                 // mvn versions:set -DnewVersion=... -DgenerateBackupPoms=false
                 mvnSetVersions(nextSnapshotVersion);
 
-                Map<String, String> properties = new HashMap<String, String>();
+                properties = new HashMap<String, String>();
                 properties.put("version", nextSnapshotVersion);
 
                 // git commit -a -m updating for next development version

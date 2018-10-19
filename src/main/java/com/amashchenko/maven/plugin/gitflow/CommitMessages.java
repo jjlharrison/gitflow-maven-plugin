@@ -22,14 +22,17 @@ package com.amashchenko.maven.plugin.gitflow;
 public class CommitMessages {
     private String featureStartMessage;
     private String featureFinishMessage;
+    private String featureMergeMessage;
 
     private String hotfixStartMessage;
     private String hotfixFinishMessage;
+    private String hotfixMergeMessage;
 
     private String hotfixVersionUpdateMessage;
 
     private String releaseStartMessage;
     private String releaseFinishMessage;
+    private String releaseMergeMessage;
 
     private String releaseVersionUpdateMessage;
 
@@ -39,14 +42,17 @@ public class CommitMessages {
     public CommitMessages() {
         featureStartMessage = "Update versions for feature branch";
         featureFinishMessage = "Update versions for development branch";
+        featureMergeMessage = "Merge branch '@{sourceBranch}'";
 
         hotfixStartMessage = "Update versions for hotfix";
         hotfixFinishMessage = "Update for next development version";
+        hotfixMergeMessage = "Merge branch '@{sourceBranch}'";
 
         hotfixVersionUpdateMessage = "Update to hotfix version";
 
         releaseStartMessage = "Update versions for release";
         releaseFinishMessage = "Update for next development version";
+        releaseMergeMessage = "Merge branch '@{sourceBranch}'";
 
         releaseVersionUpdateMessage = "Update for next development version";
 
@@ -85,6 +91,21 @@ public class CommitMessages {
     }
 
     /**
+     * @return the featureMergeMessage
+     */
+    public String getFeatureMergeMessage() {
+        return featureMergeMessage;
+    }
+
+    /**
+     * @param featureMergeMessage
+     *            the featureMergeMessage to set
+     */
+    public void setFeatureMergeMessage(String featureMergeMessage) {
+        this.featureMergeMessage = featureMergeMessage;
+    }
+
+    /**
      * @return the hotfixStartMessage
      */
     public String getHotfixStartMessage() {
@@ -112,6 +133,21 @@ public class CommitMessages {
      */
     public void setHotfixFinishMessage(String hotfixFinishMessage) {
         this.hotfixFinishMessage = hotfixFinishMessage;
+    }
+
+    /**
+     * @return the hotfixMergeMessage
+     */
+    public String getHotfixMergeMessage() {
+        return hotfixMergeMessage;
+    }
+
+    /**
+     * @param hotfixMergeMessage
+     *            the hotfixMergeMessage to set
+     */
+    public void setHotfixMergeMessage(String hotfixMergeMessage) {
+        this.hotfixMergeMessage = hotfixMergeMessage;
     }
 
     public String getHotfixVersionUpdateMessage() {
@@ -150,6 +186,21 @@ public class CommitMessages {
      */
     public void setReleaseFinishMessage(String releaseFinishMessage) {
         this.releaseFinishMessage = releaseFinishMessage;
+    }
+
+    /**
+     * @return the releaseMergeMessage
+     */
+    public String getReleaseMergeMessage() {
+        return releaseMergeMessage;
+    }
+
+    /**
+     * @param releaseMergeMessage
+     *            the releaseMergeMessage to set
+     */
+    public void setReleaseMergeMessage(String releaseMergeMessage) {
+        this.releaseMergeMessage = releaseMergeMessage;
     }
 
     public String getReleaseVersionUpdateMessage() {
